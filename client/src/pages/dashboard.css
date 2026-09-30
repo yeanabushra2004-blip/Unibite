@@ -50,11 +50,18 @@
 .stat-card span:last-child { color: var(--dash-muted); font-size: 10px; }
 .dashboard-section { margin-top: 61px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 22px; }
+.section-actions { display: flex; align-items: center; gap: 16px; }
 .section-heading h2 { margin: 0; color: var(--dash-ink); font: 700 30px Georgia, serif; }
 .text-action { border: 0; background: transparent; color: var(--dash-green); cursor: pointer; font-size: 12px; font-weight: 700; }
+.saved-filter { padding: 8px 11px; border: 1px solid var(--dash-line); border-radius: 7px; background: white; color: var(--dash-ink); cursor: pointer; font-size: 12px; }
+.saved-filter.active { border-color: var(--dash-green); background: #e4eee0; color: var(--dash-green); }
+.saved-filter span { margin-left: 4px; color: var(--dash-muted); }
 .meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.empty-meals { margin: 0; padding: 22px; border: 1px dashed #c9d4ca; border-radius: 8px; color: var(--dash-muted); font-size: 13px; text-align: center; }
 .meal-card { overflow: hidden; border: 1px solid var(--dash-line); border-radius: 15px; background: white; }
 .meal-art { height: 126px; position: relative; overflow: hidden; background: #dce9d9; }
+.favorite-toggle { position: absolute; top: 12px; right: 12px; z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: white; color: #78857f; cursor: pointer; font-size: 20px; line-height: 1; }
+.favorite-toggle.is-favorite { background: #17352f; color: #f3b36c; }
 .meal-card.orange .meal-art { background: #f5dfb9; }
 .meal-card.red .meal-art { background: #f1cfc4; }
 .meal-art::before, .meal-art::after, .meal-art span { content: ""; position: absolute; display: block; border-radius: 50%; }
