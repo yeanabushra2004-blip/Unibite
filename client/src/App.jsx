@@ -5,6 +5,7 @@ import Register from "./pages/register";
 
 function App() {
     const [showLogin, setShowLogin] = useState(false);
+    const [isAdminLogin, setIsAdminLogin] = useState(false);
     const [user, setUser] = useState(null);
     const [isCheckingSession, setIsCheckingSession] = useState(() =>
         Boolean(localStorage.getItem("unibiteToken")),
@@ -42,26 +43,46 @@ function App() {
         localStorage.removeItem("unibiteToken");
         localStorage.removeItem("unibiteUser");
         setUser(null);
+        setIsAdminLogin(false);
         setShowLogin(true);
+    };
+
+    const handleUserUpdated = (updatedUser) => {
+        setUser(updatedUser);
+        localStorage.setItem("unibiteUser", JSON.stringify(updatedUser));
     };
 
     if (isCheckingSession) {
         return <div className="session-loading">Loading your UniBite...</div>;
     }
 
-    // A verified user goes directly to the dashboard.
+    // Dashboard.jsx chooses the view from the authenticated user's role.
     if (user) {
-        return <Dashboard user={user} onLogout={handleLogout} />;
+        return <Dashboard user={user} onLogout={handleLogout} onUserUpdated={handleUserUpdated} />;
     }
 
     // Visitors without a valid token can switch between auth screens.
     return showLogin ? (
         <Login
-            onRegister={() => setShowLogin(false)}
+            isAdminLogin={isAdminLogin}
+            onRegister={() => {
+                setIsAdminLogin(false);
+                setShowLogin(false);
+            }}
+            onAdminLogin={() => setIsAdminLogin(true)}
             onLoginSuccess={(loggedInUser) => setUser(loggedInUser)}
         />
     ) : (
-        <Register onLogin={() => setShowLogin(true)} />
+        <Register
+            onLogin={() => {
+                setIsAdminLogin(false);
+                setShowLogin(true);
+            }}
+            onAdminLogin={() => {
+                setIsAdminLogin(true);
+                setShowLogin(true);
+            }}
+        />
     );
 }
 

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import "./register.css";
 
-function Login({ onRegister, onLoginSuccess }) {
-	const [formData, setFormData] = useState({ email: "", password: "" });
+function Login({ isAdminLogin = false, onRegister, onAdminLogin, onLoginSuccess }) {
+	const [formData, setFormData] = useState({ identifier: "", password: "" });
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,6 +22,10 @@ function Login({ onRegister, onLoginSuccess }) {
 
 			if (!response.ok) {
 				throw new Error(data.message || "Login failed");
+			}
+			// Keep student and admin sign-in modes restricted to their matching roles.
+			if (isAdminLogin ? data.user.role !== "admin" : data.user.role === "admin") {
+				throw new Error(isAdminLogin ? "This account does not have admin access." : "Use Admin sign in for this account.");
 			}
 
 			// The token is reused by App.jsx for session restoration.
@@ -46,11 +50,10 @@ function Login({ onRegister, onLoginSuccess }) {
 					</div>
 					<span className="brand-name">UniBite</span>
 				</div>
-				<p className="intro-kicker">Campus food, made easy</p>
-				<h1>Your next good meal is waiting.</h1>
+				<p className="intro-kicker">{isAdminLogin ? "ADMINISTRATION" : "Campus food, made easy"}</p>
+				<h1>{isAdminLogin ? "Welcome to your admin workspace." : "Your next good meal is waiting."}</h1>
 				<p className="intro-copy">
-					Sign in to order your favourites, track every bite, and make lunch
-					feel a little more like home.
+					{isAdminLogin ? "Sign in with an approved admin account to manage UniBite." : "Sign in to order your favourites, track every bite, and make lunch feel a little more like home."}
 				</p>
 				<div className="intro-note">
 					<span className="note-dot" />
@@ -67,18 +70,19 @@ function Login({ onRegister, onLoginSuccess }) {
 					</div>
 					<span className="brand-name">UniBite</span>
 				</div>
-				<p className="form-eyebrow">Welcome back</p>
-				<h2>Sign in to your account</h2>
-				<p className="form-subtitle">Use your UniBite details to continue.</p>
+				<p className="form-eyebrow">{isAdminLogin ? "ADMIN ACCESS" : "Welcome back"}</p>
+				<h2>{isAdminLogin ? "Admin sign in" : "Sign in to your account"}</h2>
+				<p className="form-subtitle">{isAdminLogin ? "Use your approved admin email." : "Sign in with your email or Student ID."}</p>
 
 				<form onSubmit={handleSubmit}>
-					<label>Email</label>
+					<label>{isAdminLogin ? "Admin email" : "Email or Student ID"}</label>
 					<input
-						type="email"
-						name="email"
-						placeholder="Enter your email"
-						value={formData.email}
-						onChange={(event) => setFormData({ ...formData, email: event.target.value })}
+						type={isAdminLogin ? "email" : "text"}
+						name="identifier"
+						placeholder={isAdminLogin ? "Enter admin email" : "Enter email or Student ID"}
+						value={formData.identifier}
+						onChange={(event) => setFormData({ ...formData, identifier: event.target.value })}
+						autoComplete="username"
 						required
 					/>
 
@@ -89,6 +93,7 @@ function Login({ onRegister, onLoginSuccess }) {
 						placeholder="Enter your password"
 						value={formData.password}
 						onChange={(event) => setFormData({ ...formData, password: event.target.value })}
+						autoComplete="current-password"
 						required
 					/>
 
@@ -98,9 +103,14 @@ function Login({ onRegister, onLoginSuccess }) {
 					{message && <p className="register-message">{message}</p>}
 				</form>
 
-				<button className="switch-button" type="button" onClick={onRegister}>
-					Create a new account
-				</button>
+				{isAdminLogin ? (
+					<button className="switch-button" type="button" onClick={onRegister}>Student sign in</button>
+				) : (
+					<>
+						<button className="switch-button" type="button" onClick={onRegister}>Create a new account</button>
+						<button className="account-mode-link" type="button" onClick={onAdminLogin}>Admin sign in</button>
+					</>
+				)}
 			</div>
 		</div>
 	);

@@ -315,10 +315,27 @@ body {
 	color: var(--leaf);
 }
 
+.auth-card .account-mode-link {
+	width: auto;
+	margin-top: 18px;
+	padding: 0;
+	border-radius: 0;
+	background: transparent;
+	font-family: Arial, sans-serif;
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--leaf);
+}
+
 .auth-card .switch-button:hover {
 	background: transparent;
 	color: var(--ink);
 	transform: none;
+}
+
+.auth-card .account-mode-link:hover {
+	background: transparent;
+	color: var(--ink);
 }
 
 .mobile-brand {

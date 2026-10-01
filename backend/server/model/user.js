@@ -6,18 +6,22 @@ const userSchema = new mongoose.Schema(
 		name: {
 			type: String,
 			required: true,
+			trim: true,
 		},
 
 		studentId: {
 			type: String,
 			required: true,
 			unique: true,
+			trim: true,
 		},
 
 		email: {
 			type: String,
 			required: true,
 			unique: true,
+			lowercase: true,
+			trim: true,
 		},
 
 		password: {
@@ -29,12 +33,13 @@ const userSchema = new mongoose.Schema(
 		phone: {
 			type: String,
 			required: true,
+			trim: true,
 		},
 
-		// Every new account is a normal user unless changed by an admin.
+		// Public registration creates students; admins assign elevated roles.
 		role: {
 			type: String,
-			enum: ["user", "admin"],
+			enum: ["user", "vendor", "admin"],
 			default: "user",
 		},
 	},
