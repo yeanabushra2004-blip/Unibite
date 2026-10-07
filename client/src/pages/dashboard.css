@@ -37,11 +37,12 @@
 .user-copy span { color: var(--dash-muted); font-size: 10px; text-transform: capitalize; }
 .dashboard-user button { border: 0; background: transparent; color: var(--dash-muted); cursor: pointer; font-size: 11px; }
 .dashboard-main { max-width: 1120px; margin: 0 auto; padding: 58px clamp(22px, 5vw, 64px) 70px; }
+.demo-preview-notice { margin-bottom: 24px; padding: 12px 15px; border: 1px solid #d4e4d0; border-radius: 8px; background: #e4eee0; color: var(--dash-green); font-size: 12px; font-weight: 700; }
 .dashboard-welcome { display: flex; align-items: end; justify-content: space-between; gap: 30px; }
 .dashboard-kicker { margin: 0 0 12px; color: #ee755e; font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
 .dashboard-welcome h1 { margin: 0; color: var(--dash-ink); font: 700 clamp(34px, 5vw, 56px)/1 Georgia, serif; letter-spacing: -2px; }
 .dashboard-welcome p:not(.dashboard-kicker) { margin: 14px 0 0; color: var(--dash-muted); font-size: 14px; }
-.primary-action { padding: 14px 18px; border: 0; border-radius: 10px; background: var(--dash-ink); color: white; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.primary-action { display: inline-block; padding: 14px 18px; border: 0; border-radius: 10px; background: var(--dash-ink); color: white; cursor: pointer; font-size: 12px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .primary-action span, .text-action span { margin-left: 8px; font-size: 16px; }
 .dashboard-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 48px; }
 .stat-card { display: grid; grid-template-columns: 28px 1fr; column-gap: 11px; padding: 22px; border: 1px solid var(--dash-line); border-radius: 14px; background: white; }
@@ -50,15 +51,38 @@
 .stat-card small { color: var(--dash-muted); font-size: 11px; }
 .stat-card strong { margin: 5px 0; font: 700 23px Georgia, serif; }
 .stat-card span:last-child { color: var(--dash-muted); font-size: 10px; }
+.dashboard-orders { margin-top: 34px; padding: 22px; border: 1px solid var(--dash-line); border-radius: 14px; background: white; }
+.order-history-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.order-history-heading .dashboard-kicker { margin-bottom: 8px; }
+.order-history-heading h2 { margin: 0; color: var(--dash-ink); font: 700 24px Georgia, serif; }
+.order-history-total { color: var(--dash-green); font-size: 16px; white-space: nowrap; }
+.order-history-error { margin-bottom: 14px; color: #963e2b; font-size: 12px; }
+.order-table-scroll { overflow-x: auto; border: 1px solid var(--dash-line); border-radius: 9px; }
+.order-history-table { width: 100%; border-collapse: collapse; text-align: left; }
+.order-history-table th, .order-history-table td { padding: 12px 14px; border-bottom: 1px solid var(--dash-line); white-space: nowrap; }
+.order-history-table th { background: #fafbf8; color: var(--dash-muted); font-size: 10px; }
+.order-history-table td { color: var(--dash-ink); font-size: 12px; }
+.order-history-table td:last-child, .order-history-table tfoot th:last-child { color: var(--dash-green); font-weight: 700; }
+.order-history-table .remove-order-button { padding: 6px 8px; border: 1px solid #ead2cc; border-radius: 6px; background: #fff7f4; color: #963e2b; cursor: pointer; font-size: 10px; font-weight: 700; }
+.order-history-table .remove-order-button:hover { background: #f5e7e3; }
+.order-history-table tfoot th { background: #f5f8f2; color: var(--dash-ink); text-align: right; }
+.order-history-table tfoot th:last-child { text-align: left; }
 .dashboard-section { margin-top: 61px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 22px; }
 .section-actions { display: flex; align-items: center; gap: 16px; }
 .section-heading h2 { margin: 0; color: var(--dash-ink); font: 700 30px Georgia, serif; }
+.food-filters { display: grid; grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(120px, 1fr)); gap: 12px; margin-bottom: 20px; padding: 16px; border: 1px solid var(--dash-line); border-radius: 12px; background: white; }
+.food-filters label { display: grid; gap: 7px; color: var(--dash-muted); font-size: 11px; font-weight: 700; }
+.food-filters input, .food-filters select { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 11px; border: 1px solid var(--dash-line); border-radius: 7px; background: white; color: var(--dash-ink); font: 12px Arial, sans-serif; }
+.food-filters input:focus, .food-filters select:focus { outline: 2px solid rgba(46, 125, 80, 0.2); border-color: var(--dash-green); }
+.order-history-message { margin: 0 0 16px; color: var(--dash-green); font-size: 12px; }
 .text-action { border: 0; background: transparent; color: var(--dash-green); cursor: pointer; font-size: 12px; font-weight: 700; }
 .saved-filter { padding: 8px 11px; border: 1px solid var(--dash-line); border-radius: 7px; background: white; color: var(--dash-ink); cursor: pointer; font-size: 12px; }
 .saved-filter.active { border-color: var(--dash-green); background: #e4eee0; color: var(--dash-green); }
 .saved-filter span { margin-left: 4px; color: var(--dash-muted); }
 .meal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.meal-category-group + .meal-category-group { margin-top: 30px; }
+.meal-category-group > h3 { margin: 0 0 14px; color: var(--dash-ink); font: 700 21px Georgia, serif; }
 .empty-meals { margin: 0; padding: 22px; border: 1px dashed #c9d4ca; border-radius: 8px; color: var(--dash-muted); font-size: 13px; text-align: center; }
 .meal-card { overflow: hidden; border: 1px solid var(--dash-line); border-radius: 15px; background: white; }
 .meal-art { height: 126px; position: relative; overflow: hidden; background: #dce9d9; }
@@ -73,10 +97,17 @@
 .meal-art::after { width: 42px; height: 18px; left: 34%; top: 56px; background: #eaa65e; transform: rotate(18deg); }
 .meal-art span { width: 31px; height: 15px; left: 54%; top: 76px; background: #6a9d61; transform: rotate(-23deg); }
 .meal-info { padding: 18px; }
+.availability-badge { display: inline-block; margin-bottom: 8px; padding: 4px 7px; border-radius: 12px; background: #e4eee0; color: var(--dash-green); font-size: 9px; font-weight: 700; }
 .meal-info h3 { margin: 0; font: 700 18px Georgia, serif; }
 .meal-info p { margin: 6px 0 18px; color: var(--dash-muted); font-size: 11px; }
 .meal-info div { display: flex; align-items: center; justify-content: space-between; }
+.meal-info .meal-stock { margin-bottom: 12px; }
+.stock-available, .stock-sold-out { font-size: 11px; font-weight: 700; }
+.stock-available { color: var(--dash-green); }
+.stock-sold-out { color: #a84a35; }
 .meal-info strong { color: var(--dash-green); font-size: 14px; }
+.meal-info .order-history-button { width: auto; height: auto; padding: 8px 10px; border: 1px solid #d4e4d0; border-radius: 7px; background: #e4eee0; color: var(--dash-green); cursor: pointer; font-size: 10px; font-weight: 700; line-height: 1.2; }
+.meal-info .order-history-button:disabled { border-color: #ead2cc; background: #f5e7e3; color: #963e2b; cursor: not-allowed; }
 .meal-info button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: #e4eee0; color: var(--dash-green); cursor: pointer; font-size: 20px; line-height: 1; }
 .dashboard-tip { display: flex; align-items: center; gap: 14px; margin-top: 52px; padding: 18px 21px; border-radius: 12px; background: #17352f; color: white; }
 .dashboard-tip > span { color: #f3b36c; font-size: 24px; }
@@ -175,6 +206,8 @@
 	.dashboard-welcome { display: block; }
 	.primary-action { margin-top: 26px; }
 	.dashboard-stats { grid-template-columns: 1fr; margin-top: 36px; }
+	.dashboard-orders { padding: 18px; }
+	.food-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 	.meal-grid { grid-template-columns: 1fr; }
 	.section-heading h2 { font-size: 26px; }
 	.dashboard-tip { align-items: flex-start; }
@@ -185,4 +218,8 @@
 	.profile-details { padding: 20px; }
 	.profile-details dl { grid-template-columns: 1fr; }
 	.profile-form { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+	.food-filters { grid-template-columns: 1fr; }
 }

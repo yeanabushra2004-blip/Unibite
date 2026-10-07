@@ -3,6 +3,10 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import authRoutes from "./server/routes/authroutes.js";
+import foodRoutes from "./server/routes/foodroutes.js";
+import orderRoutes from "./server/routes/orderriutes.js";
+import Food from "./server/model/food.js";
+import defaultFoods from "./server/data/defaultFoods.js";
 
 dotenv.config();
 
@@ -14,16 +18,37 @@ app.use(express.json());
 
 // All authentication endpoints are available under /api/auth.
 app.use("/api/auth", authRoutes);
+app.use("/api/foods", foodRoutes);
+app.use("/api/orders", orderRoutes);
 
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/unibite";
-const MONGODB_DATABASE = process.env.MONGODB_DATABASE || "test";
+const MONGODB_DATABASE = process.env.MONGODB_DATABASE || "unibite";
+
+// FR-03: Populate the MongoDB menu once, without overwriting vendor-managed food records.
+const seedFoodCatalog = async () => {
+	const foodCount = await Food.countDocuments();
+	if (foodCount === 0) {
+		await Food.insertMany(defaultFoods);
+		console.log(`Added ${defaultFoods.length} starter foods to MongoDB.`);
+	}
+
+	// Initialize inventory for foods created before quantity tracking was introduced.
+	const { modifiedCount } = await Food.updateMany(
+		{ quantity: { $exists: false } },
+		{ $set: { quantity: 20 } },
+	);
+	if (modifiedCount > 0) {
+		console.log(`Initialized inventory for ${modifiedCount} existing foods.`);
+	}
+};
 
 // Connect to MongoDB before opening the API port.
 const startServer = async () => {
 	try {
-				await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DATABASE });
+		await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DATABASE });
 		console.log("MongoDB connected successfully.");
+		await seedFoodCatalog();
 
 		// Start accepting requests only after the database is ready.
 		app.listen(PORT, () => {

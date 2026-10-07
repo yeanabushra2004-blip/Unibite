@@ -3,16 +3,23 @@ import Dashboard from "./pages/dashboard";
 import Login from "./pages/login";
 import Register from "./pages/register";
 
+const isFoodSearchPreview = new URLSearchParams(window.location.search).get("preview") === "food-search";
+const previewUser = { name: "Campus Preview", email: "preview@unibite.local", role: "user" };
+
 function App() {
     const [showLogin, setShowLogin] = useState(false);
     const [isAdminLogin, setIsAdminLogin] = useState(false);
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(isFoodSearchPreview ? previewUser : null);
     const [isCheckingSession, setIsCheckingSession] = useState(() =>
-        Boolean(localStorage.getItem("unibiteToken")),
+        !isFoodSearchPreview && Boolean(localStorage.getItem("unibiteToken")),
     );
 
     // Restore the previous login session when the page is refreshed.
     useEffect(() => {
+        if (isFoodSearchPreview) {
+            return;
+        }
+
         const token = localStorage.getItem("unibiteToken");
 
         if (!token) {
@@ -58,7 +65,7 @@ function App() {
 
     // Dashboard.jsx chooses the view from the authenticated user's role.
     if (user) {
-        return <Dashboard user={user} onLogout={handleLogout} onUserUpdated={handleUserUpdated} />;
+        return <Dashboard user={user} onLogout={handleLogout} onUserUpdated={handleUserUpdated} isDemoPreview={isFoodSearchPreview} />;
     }
 
     // Visitors without a valid token can switch between auth screens.
