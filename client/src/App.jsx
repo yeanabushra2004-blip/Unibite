@@ -8,7 +8,6 @@ const previewUser = { name: "Campus Preview", email: "preview@unibite.local", ro
 
 function App() {
     const [showLogin, setShowLogin] = useState(false);
-    const [isAdminLogin, setIsAdminLogin] = useState(false);
     const [user, setUser] = useState(isFoodSearchPreview ? previewUser : null);
     const [isCheckingSession, setIsCheckingSession] = useState(() =>
         !isFoodSearchPreview && Boolean(localStorage.getItem("unibiteToken")),
@@ -50,7 +49,6 @@ function App() {
         localStorage.removeItem("unibiteToken");
         localStorage.removeItem("unibiteUser");
         setUser(null);
-        setIsAdminLogin(false);
         setShowLogin(true);
     };
 
@@ -71,24 +69,13 @@ function App() {
     // Visitors without a valid token can switch between auth screens.
     return showLogin ? (
         <Login
-            isAdminLogin={isAdminLogin}
-            onRegister={() => {
-                setIsAdminLogin(false);
-                setShowLogin(false);
-            }}
-            onAdminLogin={() => setIsAdminLogin(true)}
+            onRegister={() => setShowLogin(false)}
             onLoginSuccess={(loggedInUser) => setUser(loggedInUser)}
         />
     ) : (
         <Register
-            onLogin={() => {
-                setIsAdminLogin(false);
-                setShowLogin(true);
-            }}
-            onAdminLogin={() => {
-                setIsAdminLogin(true);
-                setShowLogin(true);
-            }}
+            onLogin={() => setShowLogin(true)}
+            onAdminLogin={() => setShowLogin(true)}
         />
     );
 }

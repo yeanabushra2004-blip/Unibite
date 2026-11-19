@@ -6,9 +6,11 @@ import authRoutes from "./server/routes/authroutes.js";
 import foodRoutes from "./server/routes/foodroutes.js";
 import orderRoutes from "./server/routes/orderriutes.js";
 import Food from "./server/model/food.js";
+import User from "./server/model/user.js";
 import defaultFoods from "./server/data/defaultFoods.js";
 
 dotenv.config();
+dotenv.config({ path: ".env.local", override: true });
 
 const app = express();
 
@@ -43,11 +45,37 @@ const seedFoodCatalog = async () => {
 	}
 };
 
+const provisionOwnerAdmin = async () => {
+	const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+	const password = process.env.ADMIN_PASSWORD;
+	if (!email && !password) return;
+	if (!email || !password || password.length < 6) {
+		throw new Error("Set both ADMIN_EMAIL and an ADMIN_PASSWORD of at least 6 characters.");
+	}
+
+	let admin = await User.findOne({ email });
+	if (!admin) {
+		admin = new User({
+			name: process.env.ADMIN_NAME?.trim() || "UniBite Owner",
+			studentId: `ADMIN-${email}`,
+			email,
+			phone: "0000000000",
+		});
+	}
+	admin.name = process.env.ADMIN_NAME?.trim() || admin.name;
+	admin.role = "admin";
+	admin.password = password;
+	await admin.save();
+	console.log(`Owner admin account provisioned for ${email}.`);
+};
+
 // Connect to MongoDB before opening the API port.
 const startServer = async () => {
 	try {
 		await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DATABASE });
 		console.log("MongoDB connected successfully.");
+		// Existing accounts predate the approval field and remain active.
+		await provisionOwnerAdmin();
 		await seedFoodCatalog();
 
 		// Start accepting requests only after the database is ready.

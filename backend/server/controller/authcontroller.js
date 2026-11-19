@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 const getJwtSecret = () => process.env.JWT_SECRET || "unibite-development-secret";
 
-// Create a new user account after validating unique email and student ID.
+// Create a student account after validating its registration details.
 export const registerUser = async (req, res) => {
 	try {
 		const { name, studentId, email, phone, password } = req.body;
@@ -26,7 +26,7 @@ export const registerUser = async (req, res) => {
 		}
 
 		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-			return res.status(400).json({ message: "Enter a valid university email" });
+			return res.status(400).json({ message: "Enter a valid email address" });
 		}
 
 		const phoneDigits = normalizedPhone.replace(/\D/g, "");
@@ -59,9 +59,8 @@ export const registerUser = async (req, res) => {
 
 		await user.save();
 
-		// Do not return the password or token during registration.
 		res.status(201).json({
-			message: "Student account created successfully",
+			message: "Student account created successfully. You can now sign in with your email and password.",
 		});
 	} catch (error) {
 		if (error.code === 11000) {
@@ -75,31 +74,30 @@ export const registerUser = async (req, res) => {
 	}
 };
 
-// Validate credentials and issue a one-day JWT session token.
-export const loginUser = async (req, res) => {
+// Authenticate one account type by email and password, then issue a one-day session.
+const loginWithRole = async (req, res, role) => {
 	try {
-		const { identifier, email, password } = req.body;
-		const loginIdentifier = (identifier || email || "").trim();
+		const { email, password } = req.body;
+		const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-		if (!loginIdentifier || !password) {
+		if (!normalizedEmail || typeof password !== "string" || !password) {
 			return res.status(400).json({
-				message: "Email or Student ID and password are required",
+				message: "Email and password are required",
 			});
 		}
 
-		// Accept either a normalized email address or an exact Student ID.
-		const user = await User.findOne({
-			$or: [
-				{ email: loginIdentifier.toLowerCase() },
-				{ studentId: loginIdentifier },
-			],
-		});
+		if (role === "admin" && !await User.exists({ role: "admin" })) {
+			return res.status(503).json({
+				message: "Admin account is not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD in backend .env.local, then restart the server.",
+			});
+		}
+
+		const user = await User.findOne({ email: normalizedEmail, role });
 		if (!user || !(await user.comparePassword(password))) {
 			return res.status(401).json({
 				message: "Invalid email or password",
 			});
 		}
-
 		// The token carries only the user ID and role, never the password.
 		res.json({
 			message: "Login successful",
@@ -117,13 +115,15 @@ export const loginUser = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		console.error("Login failed:", error);
+		console.error(`${role} login failed:`, error);
 		res.status(500).json({
 			message: "Login failed",
-			error: error.message,
 		});
 	}
 };
+
+export const loginStudent = (req, res) => loginWithRole(req, res, "user");
+export const loginAdmin = (req, res) => loginWithRole(req, res, "admin");
 
 // Load the authenticated user's current data from the database.
 export const getCurrentUser = async (req, res) => {
@@ -165,7 +165,6 @@ export const updateCurrentUser = async (req, res) => {
 		if (existingUser) {
 			return res.status(409).json({ message: "Email or Student ID already exists" });
 		}
-
 		const user = await User.findByIdAndUpdate(
 			req.user.id,
 			{ $set: updates },
@@ -207,6 +206,20 @@ export const getAdminDashboard = async (_req, res) => {
 	} catch (error) {
 		console.error("Admin dashboard load failed:", error);
 		res.status(500).json({ message: "Could not load admin dashboard" });
+	}
+};
+
+// Return vendor choices to authenticated, approved students during checkout.
+export const getVendors = async (_req, res) => {
+	try {
+		const vendors = await User.find({ role: "vendor" })
+			.select("name")
+			.sort({ name: 1 })
+			.lean();
+		res.json({ vendors });
+	} catch (error) {
+		console.error("Vendor list load failed:", error);
+		res.status(500).json({ message: "Could not load vendors" });
 	}
 };
 

@@ -84,7 +84,7 @@ function Register({ onLogin, onAdminLogin }) {
 				{isRegistered ? (
 					<div className="registration-success">
 						<p className="register-message" role="status">{message}</p>
-						<p className="form-subtitle">Your student account is ready. Sign in to open your dashboard.</p>
+						<p className="form-subtitle">Your account is ready. Sign in with your email and password.</p>
 						<button type="button" onClick={onLogin}>Sign in now</button>
 					</div>
 				) : (

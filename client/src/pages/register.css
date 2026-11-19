@@ -402,3 +402,98 @@ body {
 		display: inline-flex;
 	}
 }
+
+.auth-page.login-page {
+	grid-template-columns: minmax(250px, 0.75fr) minmax(540px, 1.35fr);
+	gap: clamp(24px, 4vw, 60px);
+	padding: clamp(24px, 4vw, 56px);
+}
+
+.login-panels {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	align-self: center;
+	gap: 16px;
+	width: 100%;
+}
+
+.login-panels .login-card {
+	max-width: none;
+	padding: 28px 22px;
+}
+
+.login-card .form-eyebrow {
+	margin-top: 0;
+}
+
+.login-card h2 {
+	font-size: 27px;
+}
+
+.login-card .form-subtitle {
+	min-height: 36px;
+	margin-bottom: 22px;
+	line-height: 1.5;
+}
+
+.login-card form {
+	display: grid;
+}
+
+.login-card input {
+	width: 100%;
+	box-sizing: border-box;
+	margin-bottom: 16px;
+}
+
+.login-card .login-register-link {
+	margin-top: 22px;
+}
+
+.login-setup-hint {
+	margin: 22px 0 0;
+	color: var(--muted);
+	font: 11px/1.5 Arial, sans-serif;
+}
+
+@media (max-width: 1100px) {
+	.auth-page.login-page {
+		grid-template-columns: 1fr;
+		gap: 28px;
+	}
+
+	.login-page .auth-intro {
+		max-width: 850px;
+	}
+
+	.login-page .auth-intro h1 {
+		max-width: 750px;
+		font-size: clamp(38px, 6vw, 58px);
+	}
+
+	.login-panels {
+		max-width: 850px;
+		justify-self: center;
+	}
+}
+
+@media (max-width: 760px) {
+	.auth-page.login-page {
+		display: block;
+		padding: 28px 18px;
+	}
+
+	.login-page .auth-intro {
+		margin: 0 auto 28px;
+	}
+
+	.login-panels {
+		grid-template-columns: 1fr;
+		max-width: 470px;
+		margin: 0 auto;
+	}
+
+	.login-panels .auth-card {
+		margin: 0 auto;
+	}
+}

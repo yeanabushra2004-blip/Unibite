@@ -1,9 +1,10 @@
 import jwt from "jsonwebtoken";
+import User from "../model/user.js";
 
 const getJwtSecret = () => process.env.JWT_SECRET || "unibite-development-secret";
 
 // Verify the Bearer token before allowing access to protected routes.
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
 	const authorization = req.headers.authorization;
 	const token = authorization?.startsWith("Bearer ")
 		? authorization.slice(7)
@@ -13,11 +14,23 @@ export const authenticate = (req, res, next) => {
 		return res.status(401).json({ message: "Authentication required" });
 	}
 
+	let payload;
 	try {
-		req.user = jwt.verify(token, getJwtSecret());
-		next();
+		payload = jwt.verify(token, getJwtSecret());
 	} catch {
 		return res.status(401).json({ message: "Invalid or expired token" });
+	}
+
+	try {
+		const user = await User.findById(payload.id).select("role").lean();
+		if (!user) {
+			return res.status(401).json({ message: "Account not found" });
+		}
+		req.user = { ...payload, role: user.role };
+		next();
+	} catch (error) {
+		console.error("Authentication account lookup failed:", error);
+		return res.status(500).json({ message: "Could not verify account access" });
 	}
 };
 
