@@ -2,7 +2,14 @@ import User from "../model/user.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
-const getJwtSecret = () => process.env.JWT_SECRET || "unibite-development-secret";
+const accountRoles = ["user", "vendor", "admin"];
+const getJwtSecret = () => {
+	const secret = process.env.JWT_SECRET;
+	if (typeof secret !== "string" || secret.length < 32) {
+		throw new Error("JWT_SECRET must be configured with at least 32 characters.");
+	}
+	return secret;
+};
 
 // Create a student account after validating its registration details.
 export const registerUser = async (req, res) => {
@@ -75,7 +82,7 @@ export const registerUser = async (req, res) => {
 };
 
 // Authenticate one account type by email and password, then issue a one-day session.
-const loginWithRole = async (req, res, role) => {
+const loginWithRole = async (req, res, role = null) => {
 	try {
 		const { email, password } = req.body;
 		const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -92,7 +99,11 @@ const loginWithRole = async (req, res, role) => {
 			});
 		}
 
-		const user = await User.findOne({ email: normalizedEmail, role });
+		const userFilter = {
+			email: normalizedEmail,
+			role: role || { $in: accountRoles },
+		};
+		const user = await User.findOne(userFilter);
 		if (!user || !(await user.comparePassword(password))) {
 			return res.status(401).json({
 				message: "Invalid email or password",
@@ -122,7 +133,9 @@ const loginWithRole = async (req, res, role) => {
 	}
 };
 
+export const loginAccount = (req, res) => loginWithRole(req, res);
 export const loginStudent = (req, res) => loginWithRole(req, res, "user");
+export const loginVendor = (req, res) => loginWithRole(req, res, "vendor");
 export const loginAdmin = (req, res) => loginWithRole(req, res, "admin");
 
 // Load the authenticated user's current data from the database.

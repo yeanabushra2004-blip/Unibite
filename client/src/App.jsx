@@ -8,6 +8,7 @@ const previewUser = { name: "Campus Preview", email: "preview@unibite.local", ro
 
 function App() {
     const [showLogin, setShowLogin] = useState(false);
+    const [authNotice, setAuthNotice] = useState("");
     const [user, setUser] = useState(isFoodSearchPreview ? previewUser : null);
     const [isCheckingSession, setIsCheckingSession] = useState(() =>
         !isFoodSearchPreview && Boolean(localStorage.getItem("unibiteToken")),
@@ -29,17 +30,32 @@ function App() {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then(async (response) => {
+                if (response.status === 401) {
+                    localStorage.removeItem("unibiteToken");
+                    localStorage.removeItem("unibiteUser");
+                    setShowLogin(true);
+                    setAuthNotice("Your session expired. Please sign in again.");
+                    return;
+                }
                 if (!response.ok) {
-                    throw new Error("Session expired");
+                    throw new Error("Could not verify the saved session.");
                 }
 
                 const data = await response.json();
+                if (!["user", "vendor", "admin"].includes(data?.user?.role)) {
+                    localStorage.removeItem("unibiteToken");
+                    localStorage.removeItem("unibiteUser");
+                    setShowLogin(true);
+                    setAuthNotice("This account has no supported role. Ask an administrator for help.");
+                    return;
+                }
                 setUser(data.user);
                 localStorage.setItem("unibiteUser", JSON.stringify(data.user));
             })
-            .catch(() => {
-                localStorage.removeItem("unibiteToken");
-                localStorage.removeItem("unibiteUser");
+            .catch((error) => {
+                console.error("Session restore failed:", error);
+                setShowLogin(true);
+                setAuthNotice("Could not verify your saved session. Check the backend connection and sign in again.");
             })
             .finally(() => setIsCheckingSession(false));
     }, []);
@@ -49,6 +65,7 @@ function App() {
         localStorage.removeItem("unibiteToken");
         localStorage.removeItem("unibiteUser");
         setUser(null);
+        setAuthNotice("");
         setShowLogin(true);
     };
 
@@ -69,13 +86,22 @@ function App() {
     // Visitors without a valid token can switch between auth screens.
     return showLogin ? (
         <Login
-            onRegister={() => setShowLogin(false)}
-            onLoginSuccess={(loggedInUser) => setUser(loggedInUser)}
+            onRegister={() => {
+                setAuthNotice("");
+                setShowLogin(false);
+            }}
+            onLoginSuccess={(loggedInUser) => {
+                setAuthNotice("");
+                setUser(loggedInUser);
+            }}
+            notice={authNotice}
         />
     ) : (
         <Register
-            onLogin={() => setShowLogin(true)}
-            onAdminLogin={() => setShowLogin(true)}
+            onLogin={() => {
+                setAuthNotice("");
+                setShowLogin(true);
+            }}
         />
     );
 }

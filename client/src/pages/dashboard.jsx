@@ -53,6 +53,7 @@ async function readApiResponse(response) {
 // Main authenticated landing page shown after a successful login.
 function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 	const [isProfileOpen, setIsProfileOpen] = useState(false);
+	const [activeSection, setActiveSection] = useState("overview");
 	const [meals, setMeals] = useState(() => isDemoPreview ? previewMeals : []);
 	const [isMenuLoading, setIsMenuLoading] = useState(!isDemoPreview);
 	const [menuError, setMenuError] = useState("");
@@ -71,6 +72,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 	});
 	const [showFavorites, setShowFavorites] = useState(false);
 	const [orderHistory, setOrderHistory] = useState([]);
+	const [pickupNotifications, setPickupNotifications] = useState([]);
 	const [isHistoryLoading, setIsHistoryLoading] = useState(!isDemoPreview);
 	const [historyError, setHistoryError] = useState("");
 	const [searchKeyword, setSearchKeyword] = useState("");
@@ -82,6 +84,16 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 	const [pickupTime, setPickupTime] = useState(getDefaultPickupTime);
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 
+	useEffect(() => {
+		const syncActiveSection = () => {
+			const section = window.location.hash.slice(1);
+			setActiveSection(["overview", "menu", "orders"].includes(section) ? section : "overview");
+		};
+		window.addEventListener("hashchange", syncActiveSection);
+		syncActiveSection();
+		return () => window.removeEventListener("hashchange", syncActiveSection);
+	}, []);
+
 	// FR-03: Load the food catalog and the authenticated student's history from MongoDB APIs.
 	useEffect(() => {
 		if (isDemoPreview || user.role !== "user") return undefined;
@@ -89,6 +101,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 		let isActive = true;
 		const token = localStorage.getItem("unibiteToken");
 		let isHistoryRequestPending = false;
+		const notifiedReadyOrderIds = new Set();
 
 		async function loadFoods() {
 			try {
@@ -114,6 +127,12 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 				});
 				const data = await readApiResponse(response);
 				if (isActive) {
+					const newlyReadyOrders = data.orders.filter((order) =>
+						order.status === "ready" && !notifiedReadyOrderIds.has(order._id));
+					for (const order of newlyReadyOrders) notifiedReadyOrderIds.add(order._id);
+					if (newlyReadyOrders.length > 0) {
+						setPickupNotifications((current) => [...current, ...newlyReadyOrders]);
+					}
 					setOrderHistory(data.orders);
 					setHistoryError("");
 				}
@@ -375,9 +394,9 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 					<span>UniBite</span>
 				</div>
 				<nav className="dashboard-nav" aria-label="Dashboard navigation">
-					<a className="active" href="#overview">Overview</a>
-					<a href="#menu">Menu</a>
-					<a href="#orders">Orders</a>
+					<a className={activeSection === "overview" ? "active" : undefined} aria-current={activeSection === "overview" ? "location" : undefined} href="#overview">Overview</a>
+					<a className={activeSection === "menu" ? "active" : undefined} aria-current={activeSection === "menu" ? "location" : undefined} href="#menu">Menu</a>
+					<a className={activeSection === "orders" ? "active" : undefined} aria-current={activeSection === "orders" ? "location" : undefined} href="#orders">Orders</a>
 				</nav>
 				<div className="dashboard-user">
 					<button className="dashboard-profile-trigger" type="button" onClick={() => setIsProfileOpen(true)} aria-label="Open user profile">
@@ -393,6 +412,15 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 
 			{isProfileOpen ? <Profile user={user} onBack={() => setIsProfileOpen(false)} onUserUpdated={onUserUpdated} /> : <main className="dashboard-main" id="overview">
 				{isDemoPreview && <p className="demo-preview-notice" role="status">Demo preview — food search is interactive; orders are not saved to MongoDB.</p>}
+				{pickupNotifications.length > 0 && <aside className="pickup-toast" role="status" aria-live="assertive">
+					<div>
+						<strong>Pickup notification</strong>
+						{pickupNotifications.map((order) => <p key={order._id}>
+							Order {order._id} · Token {order.pickupToken} is ready for pickup from {order.vendor?.name || "the vendor"}.
+						</p>)}
+					</div>
+					<button type="button" onClick={() => setPickupNotifications([])} aria-label="Dismiss pickup notifications">×</button>
+				</aside>}
 				<section className="dashboard-welcome">
 					<div>
 						<p className="dashboard-kicker">Thursday, 24 September</p>

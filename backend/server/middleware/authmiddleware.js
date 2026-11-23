@@ -1,7 +1,14 @@
 import jwt from "jsonwebtoken";
 import User from "../model/user.js";
 
-const getJwtSecret = () => process.env.JWT_SECRET || "unibite-development-secret";
+const accountRoles = new Set(["user", "vendor", "admin"]);
+const getJwtSecret = () => {
+	const secret = process.env.JWT_SECRET;
+	if (typeof secret !== "string" || secret.length < 32) {
+		throw new Error("JWT_SECRET must be configured with at least 32 characters.");
+	}
+	return secret;
+};
 
 // Verify the Bearer token before allowing access to protected routes.
 export const authenticate = async (req, res, next) => {
@@ -23,7 +30,7 @@ export const authenticate = async (req, res, next) => {
 
 	try {
 		const user = await User.findById(payload.id).select("role").lean();
-		if (!user) {
+		if (!user || !accountRoles.has(user.role)) {
 			return res.status(401).json({ message: "Account not found" });
 		}
 		req.user = { ...payload, role: user.role };

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import "./register.css";
 
-function LoginForm({ accountType, onLoginSuccess, onRegister }) {
-	const isAdminLogin = accountType === "admin";
+function LoginForm({ onLoginSuccess, onRegister, notice }) {
 	const [formData, setFormData] = useState({ email: "", password: "" });
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,17 +12,17 @@ function LoginForm({ accountType, onLoginSuccess, onRegister }) {
 		setIsSubmitting(true);
 
 		try {
-			const response = await fetch(`http://localhost:5000/api/auth/login/${accountType}`, {
+			const response = await fetch("http://localhost:5000/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(formData),
 			});
 			const data = await response.json();
 
-			if (!response.ok) throw new Error(data.message || "Login failed");
-			const expectedRole = isAdminLogin ? "admin" : "user";
-			if (data.user.role !== expectedRole) {
-				throw new Error(isAdminLogin ? "This account does not have admin access." : "Use Admin Login for this account.");
+			if (!response.ok) throw new Error(data?.message || "Login failed");
+			if (!data || typeof data.token !== "string" || !data.token
+				|| !["user", "vendor", "admin"].includes(data?.user?.role)) {
+				throw new Error("Sign-in response was incomplete or the account role is not supported.");
 			}
 
 			localStorage.setItem("unibiteToken", data.token);
@@ -37,31 +36,28 @@ function LoginForm({ accountType, onLoginSuccess, onRegister }) {
 	};
 
 	return (
-		<section className={`auth-card login-card ${isAdminLogin ? "admin-login-card" : "student-login-card"}`}>
-			<p className="form-eyebrow">{isAdminLogin ? "ADMIN ACCESS" : "STUDENT ACCESS"}</p>
-			<h2>{isAdminLogin ? "Admin Login" : "Student Login"}</h2>
-			<p className="form-subtitle">
-				{isAdminLogin
-					? "Use the project owner's admin email and password."
-					: "Sign in with the email and password you registered with."}
-			</p>
+		<section className="auth-card login-card">
+			<p className="form-eyebrow">ACCOUNT ACCESS</p>
+			<h2>Sign in to UniBite</h2>
+			<p className="form-subtitle">Use your account email and password. Your account role determines which dashboard opens.</p>
+			{notice && <p className="login-session-notice" role="status">{notice}</p>}
 
 			<form onSubmit={handleSubmit}>
-				<label htmlFor={`${accountType}-email`}>{isAdminLogin ? "Admin email" : "Student email"}</label>
+				<label htmlFor="login-email">Email</label>
 				<input
-					id={`${accountType}-email`}
+					id="login-email"
 					type="email"
 					name="email"
-					placeholder={isAdminLogin ? "Enter admin email" : "Enter student email"}
+					placeholder="Enter your email"
 					autoComplete="username"
 					value={formData.email}
 					onChange={(event) => setFormData({ ...formData, email: event.target.value })}
 					required
 				/>
 
-				<label htmlFor={`${accountType}-password`}>Password</label>
+				<label htmlFor="login-password">Password</label>
 				<input
-					id={`${accountType}-password`}
+					id="login-password"
 					type="password"
 					name="password"
 					placeholder="Enter your password"
@@ -72,19 +68,17 @@ function LoginForm({ accountType, onLoginSuccess, onRegister }) {
 				/>
 
 				<button type="submit" disabled={isSubmitting}>
-					{isSubmitting ? "Signing in..." : isAdminLogin ? "Admin Login" : "Student Login"}
+					{isSubmitting ? "Signing in..." : "Sign in"}
 				</button>
 				{message && <p className="register-message" role="alert">{message}</p>}
 			</form>
 
-			{isAdminLogin
-				? <p className="login-setup-hint">If no Admin account exists, set ADMIN_NAME, ADMIN_EMAIL, and ADMIN_PASSWORD in backend .env.local, then restart the server.</p>
-				: <button className="switch-button login-register-link" type="button" onClick={onRegister}>Create a student account</button>}
+			<button className="switch-button login-register-link" type="button" onClick={onRegister}>Create a student account</button>
 		</section>
 	);
 }
 
-function Login({ onRegister, onLoginSuccess }) {
+function Login({ onRegister, onLoginSuccess, notice }) {
 	return (
 		<div className="auth-page login-page">
 			<section className="auth-intro" aria-label="UniBite introduction">
@@ -98,16 +92,15 @@ function Login({ onRegister, onLoginSuccess }) {
 				</div>
 				<p className="intro-kicker">Campus food, made easy</p>
 				<h1>Your next good meal is waiting.</h1>
-				<p className="intro-copy">Choose your account type to continue to UniBite.</p>
+				<p className="intro-copy">Sign in with your account. UniBite will take you to the right dashboard.</p>
 				<div className="intro-note">
 					<span className="note-dot" />
-					Student and Admin access are kept separate
+					Students, vendors and admins use one secure sign-in
 				</div>
 			</section>
 
 			<div className="login-panels">
-				<LoginForm accountType="student" onLoginSuccess={onLoginSuccess} onRegister={onRegister} />
-				<LoginForm accountType="admin" onLoginSuccess={onLoginSuccess} />
+				<LoginForm onLoginSuccess={onLoginSuccess} onRegister={onRegister} notice={notice} />
 			</div>
 		</div>
 	);

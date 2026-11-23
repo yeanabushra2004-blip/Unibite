@@ -11,6 +11,9 @@
 }
 
 .dashboard-header {
+	position: sticky;
+	top: 0;
+	z-index: 30;
 	display: flex;
 	align-items: center;
 	gap: clamp(26px, 5vw, 90px);
@@ -37,6 +40,7 @@
 .user-copy span { color: var(--dash-muted); font-size: 10px; text-transform: capitalize; }
 .dashboard-user button { border: 0; background: transparent; color: var(--dash-muted); cursor: pointer; font-size: 11px; }
 .dashboard-main { max-width: 1120px; margin: 0 auto; padding: 58px clamp(22px, 5vw, 64px) 70px; }
+#overview, #menu, #orders { scroll-margin-top: 92px; }
 .demo-preview-notice { margin-bottom: 24px; padding: 12px 15px; border: 1px solid #d4e4d0; border-radius: 8px; background: #e4eee0; color: var(--dash-green); font-size: 12px; font-weight: 700; }
 .dashboard-welcome { display: flex; align-items: end; justify-content: space-between; gap: 30px; }
 .dashboard-kicker { margin: 0 0 12px; color: #ee755e; font-size: 10px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; }
@@ -60,6 +64,10 @@
 .pickup-notification { margin-bottom: 16px; padding: 14px 16px; border: 1px solid #d4e4d0; border-radius: 9px; background: #e4eee0; color: var(--dash-green); }
 .pickup-notification strong { font-size: 13px; }
 .pickup-notification p { margin: 6px 0 0; font-size: 12px; }
+.pickup-toast { position: fixed; right: 24px; bottom: 24px; z-index: 40; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; width: min(420px, calc(100vw - 48px)); padding: 16px; border: 1px solid #b8d2b2; border-radius: 10px; background: #e4eee0; box-shadow: 0 12px 32px rgba(23, 53, 47, 0.18); color: var(--dash-green); }
+.pickup-toast strong { font-size: 13px; }
+.pickup-toast p { margin: 7px 0 0; font-size: 12px; line-height: 1.5; }
+.pickup-toast button { flex: 0 0 auto; padding: 0 2px; border: 0; background: transparent; color: var(--dash-green); cursor: pointer; font-size: 20px; line-height: 1; }
 .order-tracking-list { display: grid; gap: 12px; margin-bottom: 18px; }
 .order-tracking-card { padding: 15px; border: 1px solid var(--dash-line); border-radius: 9px; background: #fcfdfb; }
 .order-tracking-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }

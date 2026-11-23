@@ -72,6 +72,10 @@ const provisionOwnerAdmin = async () => {
 // Connect to MongoDB before opening the API port.
 const startServer = async () => {
 	try {
+		if (typeof process.env.JWT_SECRET !== "string" || process.env.JWT_SECRET.length < 32) {
+			throw new Error("Set JWT_SECRET to a unique value of at least 32 characters in the project-root .env.local file.");
+		}
+
 		await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DATABASE });
 		console.log("MongoDB connected successfully.");
 		// Existing accounts predate the approval field and remain active.
@@ -83,7 +87,7 @@ const startServer = async () => {
 			console.log(`Server running on port ${PORT}`);
 		});
 	} catch (error) {
-		console.error("MongoDB connection failed:", error.message);
+		console.error("Backend startup failed:", error.message);
 		process.exit(1);
 	}
 };

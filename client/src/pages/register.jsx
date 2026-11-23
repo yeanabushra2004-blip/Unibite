@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./register.css";
 
-function Register({ onLogin, onAdminLogin }) {
+function Register({ onLogin }) {
 	const [formData, setFormData] = useState({
 		name: "",
 		studentId: "",
@@ -79,7 +79,7 @@ function Register({ onLogin, onAdminLogin }) {
 				</div>
 				<p className="form-eyebrow">Join the table</p>
 				<h2>Create your account</h2>
-				<p className="form-subtitle">Enter your details to create an account.</p>
+				<p className="form-subtitle">Student registration is open. Vendor and Admin accounts are created by an Admin.</p>
 
 				{isRegistered ? (
 					<div className="registration-success">
@@ -110,10 +110,7 @@ function Register({ onLogin, onAdminLogin }) {
 						{message && <p className="register-message">{message}</p>}
 					</form>
 				)}
-				{!isRegistered && <>
-					<button className="account-mode-link" type="button" onClick={onAdminLogin}>Admin sign in</button>
-					<button className="switch-button" type="button" onClick={onLogin}>Already have an account? Sign in</button>
-				</>}
+				{!isRegistered && <button className="switch-button" type="button" onClick={onLogin}>Already have an account? Sign in</button>}
 			</div>
 		</div>
 	);

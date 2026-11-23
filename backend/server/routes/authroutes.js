@@ -1,12 +1,14 @@
 import express from "express";
-import { getAdminDashboard, getCurrentUser, getVendors, loginAdmin, loginStudent, registerUser, updateCurrentUser, updateUserRole } from "../controller/authcontroller.js";
+import { getAdminDashboard, getCurrentUser, getVendors, loginAccount, loginAdmin, loginStudent, loginVendor, registerUser, updateCurrentUser, updateUserRole } from "../controller/authcontroller.js";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 
 const router = express.Router();
 
 // Public account creation and login routes.
 router.post("/register", registerUser);
+router.post("/login", loginAccount);
 router.post("/login/student", loginStudent);
+router.post("/login/vendor", loginVendor);
 router.post("/login/admin", loginAdmin);
 
 // Token-protected routes. The admin check also requires the admin role.
