@@ -284,6 +284,40 @@ body {
 	box-shadow: 0 0 0 4px rgba(46, 125, 80, 0.12);
 }
 
+/* Position the Show/Hide control inside the shared login/registration password field. */
+.password-field {
+	position: relative;
+}
+
+.password-field input {
+	padding-right: 68px;
+}
+
+.auth-card .password-visibility-toggle {
+	position: absolute;
+	top: 50%;
+	right: 12px;
+	width: auto;
+	margin: 0;
+	padding: 6px;
+	transform: translateY(-50%);
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--leaf);
+	font: 700 12px Arial, sans-serif;
+	cursor: pointer;
+}
+
+.auth-card .password-visibility-toggle:hover {
+	background: rgba(46, 125, 80, 0.08);
+}
+
+.auth-card .password-visibility-toggle:focus-visible {
+	outline: 3px solid rgba(46, 125, 80, 0.3);
+	outline-offset: 2px;
+}
+
 .auth-card > form > button[type="submit"] {
 	margin-top: 3px;
 	border-radius: 10px;
@@ -340,6 +374,10 @@ body {
 
 .register-page .auth-card input {
 	margin-bottom: 16px;
+}
+
+.register-page .password-field input {
+	margin-bottom: 0;
 }
 
 @media (max-width: 760px) {
@@ -443,6 +481,10 @@ body {
 	width: 100%;
 	box-sizing: border-box;
 	margin-bottom: 16px;
+}
+
+.login-card .password-field input {
+	margin-bottom: 0;
 }
 
 .login-card .login-register-link {

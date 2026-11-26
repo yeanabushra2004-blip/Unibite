@@ -111,7 +111,10 @@
 .meal-category-group > h3 { margin: 0 0 14px; color: var(--dash-ink); font: 700 21px Georgia, serif; }
 .empty-meals { margin: 0; padding: 22px; border: 1px dashed #c9d4ca; border-radius: 8px; color: var(--dash-muted); font-size: 13px; text-align: center; }
 .meal-card { overflow: hidden; border: 1px solid var(--dash-line); border-radius: 15px; background: white; }
+/* Student food cards show a URL image or a category-colored illustration. */
 .meal-art { height: 126px; position: relative; overflow: hidden; background: #dce9d9; }
+.meal-art.has-image::before, .meal-art.has-image::after, .meal-art.has-image span { display: none; }
+.meal-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .favorite-toggle { position: absolute; top: 12px; right: 12px; z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: white; color: #78857f; cursor: pointer; font-size: 20px; line-height: 1; }
 .favorite-toggle.is-favorite { background: #17352f; color: #f3b36c; }
 .meal-card.orange .meal-art { background: #f5dfb9; }
@@ -126,6 +129,7 @@
 .availability-badge { display: inline-block; margin-bottom: 8px; padding: 4px 7px; border-radius: 12px; background: #e4eee0; color: var(--dash-green); font-size: 9px; font-weight: 700; }
 .meal-info h3 { margin: 0; font: 700 18px Georgia, serif; }
 .meal-info p { margin: 6px 0 18px; color: var(--dash-muted); font-size: 11px; }
+.meal-info p.meal-vendor, .meal-info p.meal-preparation-time { margin: -10px 0 14px; color: var(--dash-green); font-size: 10px; font-weight: 700; }
 .meal-info div { display: flex; align-items: center; justify-content: space-between; }
 .meal-info .meal-stock { margin-bottom: 12px; }
 .stock-available, .stock-sold-out { font-size: 11px; font-weight: 700; }
@@ -179,6 +183,8 @@
 .admin-food-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; padding: 18px; border: 1px solid var(--dash-line); border-radius: 10px; background: white; }
 .admin-food-form label, .admin-account-search { display: grid; gap: 7px; color: var(--dash-muted); font-size: 11px; font-weight: 700; }
 .admin-food-form input, .admin-food-form select, .admin-account-search input { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--dash-line); border-radius: 6px; background: white; color: var(--dash-ink); font: 12px Arial, sans-serif; }
+.admin-food-form .vendor-availability-field { display: flex; align-items: center; gap: 9px; }
+.admin-food-form .vendor-availability-field input { width: auto; margin: 0; accent-color: var(--dash-green); }
 .admin-food-form-actions { display: flex; grid-column: 1 / -1; gap: 8px; }
 .admin-food-detail { display: block; max-width: 260px; margin-top: 5px; overflow-wrap: anywhere; color: var(--dash-muted); font-size: 10px; white-space: normal; }
 .admin-account-search { max-width: 380px; margin-bottom: 16px; }
@@ -194,6 +200,33 @@
 .vendor-main { max-width: 1000px; margin: 0 auto; padding: 60px clamp(22px, 5vw, 64px) 72px; }
 .vendor-welcome h1 { margin: 0; color: var(--dash-ink); font: 700 clamp(36px, 5vw, 54px)/1.05 Georgia, serif; }
 .vendor-welcome > p:last-child { margin: 12px 0 0; color: var(--dash-muted); font-size: 13px; }
+.vendor-section { margin-top: 34px; padding: 24px; border: 1px solid var(--dash-line); border-radius: 10px; background: white; }
+.vendor-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.vendor-section-heading .dashboard-kicker { margin-bottom: 8px; }
+.vendor-section-heading h2 { margin: 0; color: var(--dash-ink); font: 700 25px Georgia, serif; }
+.vendor-section .admin-food-form { padding: 0 0 20px; border: 0; border-bottom: 1px solid var(--dash-line); border-radius: 0; }
+.vendor-food-form .admin-food-form-actions { align-items: center; }
+/* Vendor menu cards show food images alongside item details and actions. */
+.vendor-menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.vendor-menu-item { display: flex; min-width: 0; overflow: hidden; border: 1px solid var(--dash-line); border-radius: 9px; background: white; }
+.vendor-menu-item > img, .vendor-menu-placeholder { width: 112px; min-height: 150px; flex: 0 0 112px; object-fit: cover; background: #dce9d9; }
+.vendor-menu-placeholder.orange { background: #f5dfb9; }
+.vendor-menu-placeholder.red { background: #f1cfc4; }
+.vendor-menu-item-info { min-width: 0; padding: 14px; }
+.vendor-menu-item-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.vendor-menu-item-heading h3 { margin: 0; color: var(--dash-ink); font: 700 16px Georgia, serif; }
+.vendor-menu-item-info > p { margin: 7px 0; color: var(--dash-muted); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.vendor-available, .vendor-unavailable { flex: 0 0 auto; color: var(--dash-green); font-size: 9px; font-weight: 700; }
+.vendor-unavailable { color: #963e2b; }
+.vendor-menu-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.vendor-menu-actions .admin-role-save + .admin-role-save { margin-left: 0; }
+.vendor-notification-actions { display: flex; align-items: center; gap: 8px; }
+.vendor-notification-actions span { color: var(--dash-muted); font-size: 11px; }
+.vendor-notification { margin: 0 0 16px; padding: 12px 14px; border: 1px solid #d5e5d0; border-radius: 8px; background: #f0f7ed; color: var(--dash-green); font-size: 12px; }
+.vendor-order-count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; margin-left: 5px; border-radius: 50%; background: #e4eee0; color: var(--dash-green); font: 700 12px Arial, sans-serif; vertical-align: middle; }
+.vendor-queue { padding: 0; }
+.vendor-queue h2 { margin: 13px 0 8px; color: var(--dash-ink); font: 700 22px Georgia, serif; }
+.vendor-queue p { max-width: 340px; margin: 0; color: var(--dash-muted); font-size: 12px; line-height: 1.6; }
 .vendor-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 38px; }
 .vendor-tools article { min-height: 170px; padding: 24px; border: 1px solid var(--dash-line); border-radius: 10px; background: white; }
 .vendor-tools .vendor-queue { min-height: 0; }
@@ -261,6 +294,9 @@
 	.vendor-main { padding: 38px 20px 52px; }
 	.vendor-tools { grid-template-columns: 1fr; }
 	.vendor-queue-list li { align-items: flex-start; flex-direction: column; }
+	.vendor-menu-grid { grid-template-columns: 1fr; }
+	.vendor-section { padding: 18px; }
+	.vendor-section-heading { align-items: flex-start; flex-direction: column; }
 	.dashboard-nav { order: 3; width: 100%; justify-content: space-between; }
 	.dashboard-user { margin-left: auto; }
 	.user-copy { display: none; }

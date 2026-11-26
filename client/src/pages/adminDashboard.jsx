@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import "./dashboard.css";
 
-const emptyFood = { name: "", detail: "", category: "Breakfast", price: "", quantity: "20", tone: "green" };
+// Default values used by the admin food create/edit form.
+const emptyFood = {
+	name: "",
+	detail: "",
+	category: "Breakfast",
+	price: "",
+	quantity: "20",
+	available: true,
+	imageUrl: "",
+	preparationTime: "15",
+	tone: "green",
+};
 const formatPrice = (price) => `৳${new Intl.NumberFormat("en-BD").format(Number(price || 0))}`;
 const activeOrderStatuses = ["placed", "accepted", "preparing", "ready"];
 
@@ -120,6 +131,7 @@ function AdminDashboard({ user, onLogout }) {
 		}
 	};
 
+	// POST a new catalog item or PUT changes to the selected item.
 	const saveFood = async (event) => {
 		event.preventDefault();
 		setIsSavingFood(true);
@@ -138,6 +150,7 @@ function AdminDashboard({ user, onLogout }) {
 						...foodDraft,
 						price: Number(foodDraft.price),
 						quantity: Number(foodDraft.quantity),
+						preparationTime: Number(foodDraft.preparationTime),
 					}),
 				},
 			);
@@ -155,6 +168,7 @@ function AdminDashboard({ user, onLogout }) {
 		}
 	};
 
+	// Load an existing food item into the form for editing.
 	const editFood = (food) => {
 		setEditingFoodId(food._id);
 		setFoodDraft({
@@ -163,12 +177,16 @@ function AdminDashboard({ user, onLogout }) {
 			category: food.category,
 			price: String(food.price),
 			quantity: String(food.quantity),
+			available: food.available !== false,
+			imageUrl: food.imageUrl || "",
+			preparationTime: String(food.preparationTime || 15),
 			tone: food.tone,
 		});
 		setFoodMessage("");
 		setFoodError("");
 	};
 
+	// Remove an item from the catalog after the admin confirms.
 	const deleteFood = async (food) => {
 		if (!window.confirm(`Remove ${food.name} from the menu?`)) return;
 		setFoodError("");
@@ -190,6 +208,7 @@ function AdminDashboard({ user, onLogout }) {
 		}
 	};
 
+	// Admin can cancel a placed order or mark an active order collected.
 	const updateOrderStatus = async (order, action) => {
 		setOrderError("");
 		setOrderMessage("");
@@ -257,6 +276,7 @@ function AdminDashboard({ user, onLogout }) {
 					<article className="admin-stat"><span>Administrators</span><strong>{isLoading ? "..." : data?.stats.admins ?? 0}</strong><small>Privileged accounts</small></article>
 				</section>
 
+				{/* Admin catalog form and table for adding, editing, and deleting foods. */}
 				<section className="admin-users-section" aria-labelledby="admin-food-title">
 					<div className="admin-section-heading"><div><p className="dashboard-kicker">MENU MANAGEMENT</p><h2 id="admin-food-title">Food catalog</h2></div></div>
 					{foodError && <p className="admin-error" role="alert">{foodError}</p>}
@@ -267,15 +287,19 @@ function AdminDashboard({ user, onLogout }) {
 						<label>Category<select name="category" value={foodDraft.category} onChange={(event) => setFoodDraft({ ...foodDraft, category: event.target.value })}><option>Breakfast</option><option>Lunch</option><option>Drinks</option></select></label>
 						<label>Price (৳)<input name="price" type="number" min="0" step="0.01" value={foodDraft.price} onChange={(event) => setFoodDraft({ ...foodDraft, price: event.target.value })} required /></label>
 						<label>Stock<input name="quantity" type="number" min="0" step="1" value={foodDraft.quantity} onChange={(event) => setFoodDraft({ ...foodDraft, quantity: event.target.value })} required /></label>
+						<label>Preparation time (minutes)<input name="preparationTime" type="number" min="1" max="240" step="1" value={foodDraft.preparationTime} onChange={(event) => setFoodDraft({ ...foodDraft, preparationTime: event.target.value })} required /></label>
+						<label>Image URL<input name="imageUrl" type="url" value={foodDraft.imageUrl} onChange={(event) => setFoodDraft({ ...foodDraft, imageUrl: event.target.value })} placeholder="https://..." /></label>
 						<label>Card color<select name="tone" value={foodDraft.tone} onChange={(event) => setFoodDraft({ ...foodDraft, tone: event.target.value })}><option value="green">Green</option><option value="orange">Orange</option><option value="red">Red</option></select></label>
+						<label className="vendor-availability-field"><input name="available" type="checkbox" checked={foodDraft.available} onChange={(event) => setFoodDraft({ ...foodDraft, available: event.target.checked })} /> Available to order</label>
 						<div className="admin-food-form-actions"><button className="admin-role-save" type="submit" disabled={isSavingFood}>{isSavingFood ? "Saving..." : editingFoodId ? "Save food" : "Add food"}</button>{editingFoodId && <button className="admin-role-save secondary" type="button" onClick={() => { setEditingFoodId(""); setFoodDraft(emptyFood); }}>Cancel edit</button>}</div>
 					</form>
 					{isLoadingFoods ? <p className="admin-state">Loading food catalog...</p> : foods.length === 0 ? <p className="admin-state">No food items found.</p> : <div className="admin-table-scroll"><table className="admin-users-table">
-						<thead><tr><th>Food</th><th>Category</th><th>Price</th><th>Stock</th><th>Action</th></tr></thead>
-						<tbody>{foods.map((food) => <tr key={food._id}><td>{food.name}<small className="admin-food-detail">{food.detail}</small></td><td>{food.category}</td><td>{formatPrice(food.price)}</td><td>{food.quantity}</td><td><button className="admin-role-save" type="button" onClick={() => editFood(food)}>Edit</button><button className="admin-role-save danger" type="button" onClick={() => deleteFood(food)}>Delete</button></td></tr>)}</tbody>
+						<thead><tr><th>Food</th><th>Vendor</th><th>Category</th><th>Price</th><th>Stock</th><th>Availability</th><th>Prep time</th><th>Action</th></tr></thead>
+						<tbody>{foods.map((food) => <tr key={food._id}><td>{food.name}<small className="admin-food-detail">{food.detail}</small>{food.imageUrl && <small className="admin-food-detail">Image available</small>}</td><td>{food.vendor?.name || "Shared catalog"}</td><td>{food.category}</td><td>{formatPrice(food.price)}</td><td>{food.quantity}</td><td>{food.available === false ? "Unavailable" : "Available"}</td><td>{food.preparationTime} min</td><td><button className="admin-role-save" type="button" onClick={() => editFood(food)}>Edit</button><button className="admin-role-save danger" type="button" onClick={() => deleteFood(food)}>Delete</button></td></tr>)}</tbody>
 					</table></div>}
 				</section>
 
+				{/* All-order table with admin cancellation and completion controls. */}
 				<section className="admin-users-section" aria-labelledby="admin-orders-title">
 					<div className="admin-section-heading"><div><p className="dashboard-kicker">ORDER MANAGEMENT</p><h2 id="admin-orders-title">All orders</h2></div><button type="button" onClick={reloadDashboard} disabled={isLoadingOrders}>Refresh</button></div>
 					{orderError && <p className="admin-error" role="alert">{orderError}</p>}
@@ -302,6 +326,7 @@ function AdminDashboard({ user, onLogout }) {
 					</table></div>}
 				</section>
 
+				{/* Search accounts and update their assigned roles. */}
 				<section className="admin-users-section">
 					<div className="admin-section-heading"><div><p className="dashboard-kicker">STUDENT MANAGEMENT</p><h2>Registered accounts</h2></div><button type="button" onClick={reloadDashboard} disabled={isLoading}>Refresh</button></div>
 					{roleMessage && <p className="admin-role-message" role="status">{roleMessage}</p>}

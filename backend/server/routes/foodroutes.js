@@ -1,13 +1,16 @@
 import express from "express";
-import { createFood, deleteFood, getFoods, updateFood } from "../controller/foodcontroller.js";
+import { createFood, deleteFood, getFoods, getVendorFoods, updateFood } from "../controller/foodcontroller.js";
 import { authenticate, authorizeRoles } from "../middleware/authmiddleware.js";
 
 const router = express.Router();
 
 // FR-03: Serve the MongoDB food catalog to students.
 router.get("/", getFoods);
-router.post("/", authenticate, authorizeRoles("admin"), createFood);
-router.put("/:foodId", authenticate, authorizeRoles("admin"), updateFood);
-router.delete("/:foodId", authenticate, authorizeRoles("admin"), deleteFood);
+// Vendors can read only their own menu after authentication.
+router.get("/vendor", authenticate, authorizeRoles("vendor"), getVendorFoods);
+// Food changes require an authenticated vendor or administrator.
+router.post("/", authenticate, authorizeRoles("admin", "vendor"), createFood);
+router.put("/:foodId", authenticate, authorizeRoles("admin", "vendor"), updateFood);
+router.delete("/:foodId", authenticate, authorizeRoles("admin", "vendor"), deleteFood);
 
 export default router;

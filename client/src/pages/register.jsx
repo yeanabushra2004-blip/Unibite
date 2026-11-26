@@ -12,6 +12,8 @@ function Register({ onLogin }) {
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isRegistered, setIsRegistered] = useState(false);
+	// Lets the student verify the password before submitting registration.
+	const [showPassword, setShowPassword] = useState(false);
 
 	const handleChange = (event) => {
 		setFormData({ ...formData, [event.target.name]: event.target.value });
@@ -102,7 +104,17 @@ function Register({ onLogin }) {
 						<input type="tel" name="phone" placeholder="Enter your phone number" value={formData.phone} onChange={handleChange} autoComplete="tel" required />
 
 						<label>Password</label>
-						<input type="password" name="password" placeholder="Enter your password" value={formData.password} onChange={handleChange} autoComplete="new-password" minLength={6} required />
+						<div className="password-field">
+							<input type={showPassword ? "text" : "password"} name="password" placeholder="Enter your password" value={formData.password} onChange={handleChange} autoComplete="new-password" minLength={6} required />
+							<button
+								className="password-visibility-toggle"
+								type="button"
+								aria-label={showPassword ? "Hide password" : "Show password"}
+								onClick={() => setShowPassword((isVisible) => !isVisible)}
+							>
+								{showPassword ? "Hide" : "Show"}
+							</button>
+						</div>
 
 						<button type="submit" disabled={isSubmitting}>
 							{isSubmitting ? "Registering..." : "Register"}

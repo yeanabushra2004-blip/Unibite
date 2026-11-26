@@ -45,6 +45,44 @@ const seedFoodCatalog = async () => {
 	}
 };
 
+// Replace the old global food-name index and backfill defaults for legacy menu records.
+const migrateFoodNameIndex = async () => {
+	const collections = await Food.db.db
+		.listCollections({ name: Food.collection.name }, { nameOnly: true })
+		.toArray();
+	if (collections.length === 0) {
+		await Food.createCollection();
+	}
+
+	const indexes = await Food.collection.indexes();
+	const legacyIndex = indexes.find((index) =>
+		index.name === "name_1"
+		&& index.unique
+		&& Object.keys(index.key).length === 1
+		&& index.key.name === 1);
+	if (legacyIndex) {
+		await Food.collection.dropIndex(legacyIndex.name);
+	}
+
+	await Food.updateMany(
+		{ available: { $exists: false } },
+		{ $set: { available: true } },
+	);
+	await Food.updateMany(
+		{ imageUrl: { $exists: false } },
+		{ $set: { imageUrl: "" } },
+	);
+	await Food.updateMany(
+		{ preparationTime: { $exists: false } },
+		{ $set: { preparationTime: 15 } },
+	);
+	await Food.updateMany(
+		{ vendor: { $exists: false } },
+		{ $set: { vendor: null } },
+	);
+	await Food.createIndexes();
+};
+
 const provisionOwnerAdmin = async () => {
 	const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 	const password = process.env.ADMIN_PASSWORD;
@@ -78,6 +116,7 @@ const startServer = async () => {
 
 		await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DATABASE });
 		console.log("MongoDB connected successfully.");
+		await migrateFoodNameIndex();
 		// Existing accounts predate the approval field and remain active.
 		await provisionOwnerAdmin();
 		await seedFoodCatalog();

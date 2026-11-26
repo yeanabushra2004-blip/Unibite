@@ -5,6 +5,7 @@ import Order from "../model/order.js";
 import QueueCounter from "../model/queuecounter.js";
 import User from "../model/user.js";
 
+// Allowed vendor progression; updates that skip a step are rejected below.
 const vendorOrderStatusTransitions = {
 	placed: "accepted",
 	accepted: "preparing",
@@ -64,15 +65,31 @@ export const createPreOrder = async (req, res) => {
 		let totalPrice = 0;
 		for (const [foodId, quantity] of quantities) {
 			const food = await Food.findOneAndUpdate(
-				{ _id: foodId, quantity: { $gte: quantity } },
+				{
+					_id: foodId,
+					quantity: { $gte: quantity },
+					available: { $ne: false },
+					$or: [
+						{ vendor: vendorId },
+						{ vendor: null },
+						{ vendor: { $exists: false } },
+					],
+				},
 				{ $inc: { quantity: -quantity } },
-				{ new: true },
-			).select("name category price");
+				{ returnDocument: "after" },
+			).select("name category price preparationTime");
 			if (!food) {
-				const exists = await Food.exists({ _id: foodId });
-				throw Object.assign(new Error(exists ? "Not enough food is available to fulfill your cart" : "A food item in your cart no longer exists"), {
-					statusCode: exists ? 409 : 404,
-				});
+				const unavailableFood = await Food.findById(foodId).select("vendor quantity available").lean();
+				if (!unavailableFood) {
+					throw Object.assign(new Error("A food item in your cart no longer exists"), { statusCode: 404 });
+				}
+				if (unavailableFood.vendor && unavailableFood.vendor.toString() !== vendorId) {
+					throw Object.assign(new Error("Your cart contains food from a different vendor"), { statusCode: 400 });
+				}
+				if (unavailableFood.available === false) {
+					throw Object.assign(new Error("A food item in your cart is currently unavailable"), { statusCode: 409 });
+				}
+				throw Object.assign(new Error("Not enough food is available to fulfill your cart"), { statusCode: 409 });
 			}
 
 			reservations.push({ foodId: food._id, quantity });
@@ -82,6 +99,7 @@ export const createPreOrder = async (req, res) => {
 				category: food.category,
 				priceAtOrder: food.price,
 				quantity,
+				preparationTime: food.preparationTime,
 			});
 			totalPrice += food.price * quantity;
 		}
@@ -90,7 +108,7 @@ export const createPreOrder = async (req, res) => {
 		const counter = await QueueCounter.findOneAndUpdate(
 			{ day },
 			{ $inc: { value: 1 } },
-			{ new: true, upsert: true, setDefaultsOnInsert: true },
+			{ returnDocument: "after", upsert: true, setDefaultsOnInsert: true },
 		);
 		const queuePosition = counter.value;
 		const estimatedPickupAt = new Date(Math.max(Date.now(), pickupAt.getTime()) + (queuePosition - 1) * 5 * 60 * 1000);
@@ -146,10 +164,10 @@ export const createOrder = async (req, res) => {
 		}
 
 		const food = await Food.findOneAndUpdate(
-			{ _id: foodId, quantity: { $gt: 0 } },
+			{ _id: foodId, quantity: { $gt: 0 }, available: { $ne: false } },
 			{ $inc: { quantity: -1 } },
-			{ new: true },
-		).select("name category price quantity");
+			{ returnDocument: "after" },
+		).select("name category price quantity preparationTime");
 		if (!food) {
 			return res.status(409).json({ message: "This food is sold out and not available right now" });
 		}
@@ -162,6 +180,7 @@ export const createOrder = async (req, res) => {
 				mealName: food.name,
 				category: food.category,
 				priceAtOrder: food.price,
+				preparationTime: food.preparationTime,
 			});
 		} catch (error) {
 			// Restore one unit if order-history persistence fails after reserving stock.
@@ -203,7 +222,7 @@ export const cancelOrder = async (req, res) => {
 		const order = await Order.findOneAndUpdate(
 			orderFilter,
 			{ $set: { status: "cancelled" } },
-			{ new: true },
+			{ returnDocument: "after" },
 		);
 		if (!order) {
 			return res.status(404).json({ message: "Order item not found or already removed" });
@@ -269,7 +288,7 @@ export const completeAdminOrder = async (req, res) => {
 		const order = await Order.findOneAndUpdate(
 			{ _id: req.params.orderId, status: { $in: Object.keys(vendorOrderStatusTransitions) } },
 			{ $set: { status: "collected" } },
-			{ new: true },
+			{ returnDocument: "after" },
 		).select("_id status updatedAt");
 		if (!order) {
 			return res.status(404).json({ message: "Active order not found" });
@@ -327,7 +346,7 @@ export const updateVendorOrderStatus = async (req, res) => {
 		const order = await Order.findOneAndUpdate(
 			{ _id: currentOrder._id, vendor: req.user.id, status: currentOrder.status },
 			{ $set: { status } },
-			{ new: true },
+			{ returnDocument: "after" },
 		).select("_id status updatedAt");
 		if (!order) {
 			return res.status(409).json({ message: "Order status changed; refresh the pickup queue and try again" });

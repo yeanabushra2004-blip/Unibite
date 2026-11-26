@@ -94,7 +94,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 		return () => window.removeEventListener("hashchange", syncActiveSection);
 	}, []);
 
-	// FR-03: Load the food catalog and the authenticated student's history from MongoDB APIs.
+	// Load the food catalog, this student's order history, and the available vendor list.
 	useEffect(() => {
 		if (isDemoPreview || user.role !== "user") return undefined;
 
@@ -188,8 +188,15 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 			: [...currentFavorites, mealName]);
 	}
 
+	// Only available, in-stock items from one vendor can be added to this cart.
 	function addToCart(meal) {
-		if (meal.quantity < 1) return;
+		if (meal.available === false || meal.quantity < 1) return;
+		const mealVendorId = meal.vendor?._id || "";
+		const cartVendorIds = new Set(cart.map((item) => item.vendorId).filter(Boolean));
+		if (mealVendorId && cartVendorIds.size > 0 && !cartVendorIds.has(mealVendorId)) {
+			setHistoryMessage("A pre-order can contain items from only one vendor.");
+			return;
+		}
 		const existing = cart.find((item) => item.foodId === meal._id);
 		const quantity = existing ? existing.quantity + 1 : 1;
 		if (quantity > meal.quantity) {
@@ -198,7 +205,15 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 		}
 		setCart(existing
 			? cart.map((item) => item.foodId === meal._id ? { ...item, quantity } : item)
-			: [...cart, { foodId: meal._id, name: meal.name, price: meal.price, quantity }]);
+			: [...cart, {
+				foodId: meal._id,
+				name: meal.name,
+				price: meal.price,
+				quantity,
+				vendorId: mealVendorId,
+				vendorName: meal.vendor?.name || "",
+			}]);
+		if (mealVendorId) setSelectedVendorId(mealVendorId);
 		setHistoryMessage(`${meal.name} added to your cart.`);
 	}
 
@@ -206,7 +221,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 		const item = cart.find((entry) => entry.foodId === foodId);
 		const meal = meals.find((entry) => entry._id === foodId);
 		if (!item || !meal) return;
-		if (change > 0 && item.quantity >= meal.quantity) {
+		if (change > 0 && (meal.available === false || item.quantity >= meal.quantity)) {
 			setHistoryMessage(`Only ${meal.quantity} ${meal.name} available.`);
 			return;
 		}
@@ -217,21 +232,27 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 		}));
 	}
 
+	// Submit the cart and pickup time as one vendor-specific pre-order.
 	async function checkoutCart() {
 		setIsCheckingOut(true);
 		setHistoryError("");
 		setHistoryMessage("");
 		try {
+			const cartVendorIds = [...new Set(cart.map((item) => item.vendorId).filter(Boolean))];
+			if (cartVendorIds.length > 1) throw new Error("A pre-order can contain items from only one vendor.");
+			const checkoutVendorId = cartVendorIds[0] || selectedVendorId;
+			if (!checkoutVendorId) throw new Error("Choose a vendor for this order.");
+
 			let order;
 			if (isDemoPreview) {
 				const demoItems = cart.map((item) => {
 					const meal = meals.find((entry) => entry._id === item.foodId);
-					if (!meal || meal.quantity < item.quantity) throw new Error(`${item.name} does not have enough stock.`);
+					if (!meal || meal.available === false || meal.quantity < item.quantity) throw new Error(`${item.name} does not have enough stock.`);
 					return { food: item.foodId, mealName: meal.name, category: meal.category, priceAtOrder: meal.price, quantity: item.quantity };
 				});
 				order = {
 					_id: `preview-order-${globalThis.crypto.randomUUID()}`,
-					vendor: selectedVendorId,
+					vendor: checkoutVendorId,
 					items: demoItems,
 					totalPrice: demoItems.reduce((sum, item) => sum + item.priceAtOrder * item.quantity, 0),
 					pickupAt: new Date(pickupTime).toISOString(),
@@ -254,7 +275,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 					},
 					body: JSON.stringify({
 						items: cart.map(({ foodId, quantity }) => ({ foodId, quantity })),
-						vendorId: selectedVendorId,
+						vendorId: checkoutVendorId,
 						pickupTime: new Date(pickupTime).toISOString(),
 					}),
 				});
@@ -268,7 +289,9 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 
 			setOrderHistory((currentHistory) => [order, ...currentHistory]);
 			setCart([]);
-			const vendorName = vendors.find((vendor) => vendor._id === selectedVendorId)?.name || "Campus Vendor";
+			const vendorName = vendors.find((vendor) => vendor._id === checkoutVendorId)?.name
+				|| cart.find((item) => item.vendorId === checkoutVendorId)?.vendorName
+				|| "Campus Vendor";
 			setHistoryMessage(`Pre-order #${order._id} confirmed with ${vendorName} · ${formatPrice(order.totalPrice)} · Pickup ${new Date(order.pickupAt).toLocaleString()} · Token ${order.pickupToken} · Queue #${order.queuePosition} · Estimate ${new Date(order.estimatedPickupAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
 		} catch (error) {
 			setHistoryError(error.message || "Could not create pre-order");
@@ -379,6 +402,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 		.filter((order) => activePickupStatuses.includes(order.status) && order.pickupAt)
 		.sort((first, second) => new Date(first.pickupAt) - new Date(second.pickupAt))[0];
 	const invalidPriceRange = minPrice !== "" && maxPrice !== "" && Number(minPrice) > Number(maxPrice);
+	const cartVendorIds = [...new Set(cart.map((item) => item.vendorId).filter(Boolean))];
 
 	if (user.role === "admin") {
 		return <AdminDashboard user={user} onLogout={onLogout} />;
@@ -483,6 +507,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 						</table></div>}
 				</section>
 
+				{/* Student storefront: filters, cart, menu cards, and image URL display. */}
 				<section className="dashboard-section" id="menu">
 					<div className="section-heading"><div><p className="dashboard-kicker">Made for your day</p><h2>Recommended for you</h2></div><div className="section-actions"><button type="button" className={`saved-filter${showFavorites ? " active" : ""}`} onClick={() => setShowFavorites((current) => !current)} aria-pressed={showFavorites}>Saved <span>{favoriteMeals.length}</span></button></div></div>
 					<div className="food-filters" role="search" aria-label="Find food">
@@ -496,7 +521,7 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 						{cart.length === 0 ? <p className="cart-empty">Add food from the menu, then choose a pickup time.</p> : <>
 							<ul className="cart-items">{cart.map((item) => <li key={item.foodId}><span>{item.name} · {formatPrice(item.price)}</span><div><button type="button" aria-label={`Decrease ${item.name}`} onClick={() => changeCartQuantity(item.foodId, -1)}>−</button><strong>{item.quantity}</strong><button type="button" aria-label={`Increase ${item.name}`} onClick={() => changeCartQuantity(item.foodId, 1)}>+</button></div></li>)}</ul>
 							<div className="cart-checkout">
-								<label>Vendor<select value={selectedVendorId} onChange={(event) => setSelectedVendorId(event.target.value)} required><option value="">Choose a vendor</option>{vendors.map((vendor) => <option key={vendor._id} value={vendor._id}>{vendor.name}</option>)}</select></label>
+								<label>Vendor<select value={cartVendorIds[0] || selectedVendorId} onChange={(event) => setSelectedVendorId(event.target.value)} disabled={cartVendorIds.length === 1} required><option value="">Choose a vendor</option>{vendors.map((vendor) => <option key={vendor._id} value={vendor._id}>{vendor.name}</option>)}</select></label>
 								<label>Pickup time<input type="datetime-local" value={pickupTime} onChange={(event) => setPickupTime(event.target.value)} required /></label>
 								<button type="button" className="primary-action" disabled={isCheckingOut || !selectedVendorId} onClick={checkoutCart}>{isCheckingOut ? "Confirming..." : "Confirm pre-order"}</button>
 							</div>
@@ -513,23 +538,27 @@ function Dashboard({ user, onLogout, onUserUpdated, isDemoPreview = false }) {
 							<div className="meal-grid">
 								{categoryMeals.map((meal) => {
 									const isFavorite = favoriteMeals.includes(meal.name);
-									return <article className={`meal-card ${meal.tone}`} key={meal.name}>
-										<div className="meal-art">
+									return <article className={`meal-card ${meal.tone}`} key={meal._id}>
+										<div className={`meal-art${meal.imageUrl ? " has-image" : ""}`}>
 											<span aria-hidden="true" />
+											{/* Use the vendor image when present; CSS artwork is the fallback. */}
+											{meal.imageUrl && <img src={meal.imageUrl} alt={meal.name} loading="lazy" />}
 											<button type="button" className={`favorite-toggle${isFavorite ? " is-favorite" : ""}`} onClick={() => toggleFavorite(meal.name)} aria-label={isFavorite ? `Remove ${meal.name} from saved meals` : `Save ${meal.name}`} aria-pressed={isFavorite}>{isFavorite ? "★" : "☆"}</button>
 										</div>
 										<div className="meal-info">
 											{meal.category === "Drinks" && <span className="availability-badge">Available all day</span>}
 											<h3>{meal.name}</h3>
 											<p>{meal.detail}</p>
+											{meal.vendor?.name && <p className="meal-vendor">By {meal.vendor.name}</p>}
+											<p className="meal-preparation-time">Preparation: {meal.preparationTime || 15} min</p>
 											<div className="meal-stock">
-												<span className={meal.quantity > 0 ? "stock-available" : "stock-sold-out"}>
-													{meal.quantity > 0 ? `${meal.quantity} available` : "Not available"}
+												<span className={meal.available !== false && meal.quantity > 0 ? "stock-available" : "stock-sold-out"}>
+													{meal.available === false ? "Unavailable" : meal.quantity > 0 ? `${meal.quantity} available` : "Not available"}
 												</span>
 												<strong>{formatPrice(meal.price)}</strong>
 											</div>
-											<button type="button" className="order-history-button" onClick={() => addToCart(meal)} disabled={meal.quantity < 1}>
-												{meal.quantity > 0 ? (cart.some((item) => item.foodId === meal._id) ? "Add another" : "Add to cart") : "Sold out"}
+											<button type="button" className="order-history-button" onClick={() => addToCart(meal)} disabled={meal.available === false || meal.quantity < 1}>
+												{meal.available === false ? "Unavailable" : meal.quantity > 0 ? (cart.some((item) => item.foodId === meal._id) ? "Add another" : "Add to cart") : "Sold out"}
 											</button>
 										</div>
 									</article>;

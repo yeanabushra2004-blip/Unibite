@@ -5,7 +5,10 @@ function LoginForm({ onLoginSuccess, onRegister, notice }) {
 	const [formData, setFormData] = useState({ email: "", password: "" });
 	const [message, setMessage] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	// Controls whether the password input is masked while the user types.
+	const [showPassword, setShowPassword] = useState(false);
 
+	// Authenticate the user, save the session token, then open the role dashboard.
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 		setMessage("");
@@ -56,16 +59,27 @@ function LoginForm({ onLoginSuccess, onRegister, notice }) {
 				/>
 
 				<label htmlFor="login-password">Password</label>
-				<input
-					id="login-password"
-					type="password"
-					name="password"
-					placeholder="Enter your password"
-					autoComplete="current-password"
-					value={formData.password}
-					onChange={(event) => setFormData({ ...formData, password: event.target.value })}
-					required
-				/>
+				<div className="password-field">
+					<input
+						id="login-password"
+						type={showPassword ? "text" : "password"}
+						name="password"
+						placeholder="Enter your password"
+						autoComplete="current-password"
+						value={formData.password}
+						onChange={(event) => setFormData({ ...formData, password: event.target.value })}
+						required
+					/>
+					<button
+						className="password-visibility-toggle"
+						type="button"
+						aria-label={showPassword ? "Hide password" : "Show password"}
+						aria-controls="login-password"
+						onClick={() => setShowPassword((isVisible) => !isVisible)}
+					>
+						{showPassword ? "Hide" : "Show"}
+					</button>
+				</div>
 
 				<button type="submit" disabled={isSubmitting}>
 					{isSubmitting ? "Signing in..." : "Sign in"}
